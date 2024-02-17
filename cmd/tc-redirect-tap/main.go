@@ -126,6 +126,7 @@ func newPlugin(args *skel.CmdArgs) (*plugin, error) {
 		NetlinkOps: internal.DefaultNetlinkOps(),
 		tapUID:     os.Geteuid(),
 		tapGID:     os.Getegid(),
+		tapQueues:  1,
 
 		// given the use case of supporting VMs, we call the "containerID" a "vmID"
 		vmID: args.ContainerID,
@@ -159,6 +160,14 @@ func newPlugin(args *skel.CmdArgs) (*plugin, error) {
 			return nil, fmt.Errorf("tapGID should be numeric convertible, got %q: %w", tapGIDVal, err)
 		}
 		plugin.tapGID = tapGID
+	}
+
+	if tapQueuesVal, wasDefined := parsedArgs[pluginargs.TCRedirectTapQueues]; wasDefined {
+		tapQueues, err := strconv.Atoi(tapQueuesVal)
+		if err != nil {
+			return nil, fmt.Errorf("tapQueues should be numeric convertible, got %q: %w", tapQueuesVal, err)
+		}
+		plugin.tapQueues = tapQueues
 	}
 
 	return plugin, nil
@@ -207,6 +216,9 @@ type plugin struct {
 	// tapGID is the gid of the group-owner of the tap device
 	tapGID int
 
+	// tapQueues is the number of queues to create on the tap device
+	tapQueues int
+
 	// redirectInterfaceName is the name of the device that the tap device will have a
 	// u32 redirect filter pair with. It's provided by the client via the CNI runtime
 	// config "IfName" parameter
@@ -231,7 +243,7 @@ func (p plugin) add() error {
 		redirectIPs := internal.InterfaceIPs(
 			p.currentResult, redirectLink.Attrs().Name, p.netNS.Path())
 
-		tapLink, err := p.CreateTap(p.tapName, redirectLink.Attrs().MTU, p.tapUID, p.tapGID)
+		tapLink, err := p.CreateTap(p.tapName, redirectLink.Attrs().MTU, p.tapUID, p.tapGID, p.tapQueues)
 		if err != nil {
 			return err
 		}

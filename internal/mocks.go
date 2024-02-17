@@ -120,7 +120,7 @@ func (m *MockNetlinkOps) RemoveLink(name string) error {
 }
 
 // CreateTap returns the configured mock tap link and/or a configured error
-func (m *MockNetlinkOps) CreateTap(name string, mtu int, ownerUID, ownerGID int) (netlink.Link, error) {
+func (m *MockNetlinkOps) CreateTap(name string, mtu int, ownerUID, ownerGID, queues int) (netlink.Link, error) {
 	return m.CreatedTap, m.CreateTapErr
 }
 

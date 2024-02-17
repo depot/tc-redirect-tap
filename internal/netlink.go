@@ -41,7 +41,7 @@ func RootFilterHandle() uint32 {
 type NetlinkOps interface {
 	// CreateTap will create a tap device configured as expected by the tc-redirect-tap plugin for
 	// use by a Firecracker VM. It sets the tap in the up state and with the provided MTU.
-	CreateTap(name string, mtu int, ownerUID int, ownerGID int) (netlink.Link, error)
+	CreateTap(name string, mtu int, ownerUID int, ownerGID, queues int) (netlink.Link, error)
 
 	// AddIngressQdisc adds a qdisc to the ingress queue of the provided device.
 	AddIngressQdisc(link netlink.Link) error
@@ -196,7 +196,7 @@ func (ops defaultNetlinkOps) RemoveLink(name string) error {
 	return err
 }
 
-func (defaultNetlinkOps) CreateTap(name string, mtu int, ownerUID, ownerGID int) (netlink.Link, error) {
+func (defaultNetlinkOps) CreateTap(name string, mtu int, ownerUID, ownerGID, queues int) (netlink.Link, error) {
 	tapLinkAttrs := netlink.NewLinkAttrs()
 	tapLinkAttrs.Name = name
 	tapLink := &netlink.Tuntap{
@@ -205,9 +205,7 @@ func (defaultNetlinkOps) CreateTap(name string, mtu int, ownerUID, ownerGID int)
 		// We want a tap device (L2) as opposed to a tun (L3)
 		Mode: netlink.TUNTAP_MODE_TAP,
 
-		// Firecracker does not support multiqueue tap devices at this time:
-		// https://github.com/firecracker-microvm/firecracker/issues/750
-		Queues: 1,
+		Queues: queues,
 
 		Flags: netlink.TUNTAP_ONE_QUEUE | // single queue tap device
 			netlink.TUNTAP_VNET_HDR, // parse vnet headers added by the vm's virtio_net implementation
