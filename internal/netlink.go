@@ -207,7 +207,7 @@ func (defaultNetlinkOps) CreateTap(name string, mtu int, ownerUID, ownerGID, que
 
 		Queues: queues,
 
-		Flags: netlink.TUNTAP_MULTI_QUEUE_DEFAULTS | // multi-queue tap device
+		Flags: netlink.TUNTAP_ONE_QUEUE | // single queue tap device
 			netlink.TUNTAP_VNET_HDR, // parse vnet headers added by the vm's virtio_net implementation
 	}
 
